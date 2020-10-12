@@ -3,17 +3,67 @@
 
 using namespace std;
 
-void playerMove() {
+const int DIRECTION[8][2] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1} };
+
+//Ask user for a number
+//Repeat until a vaild number greater than 0
+int InputNumber(int min) {
+    int result = min -1;
+    while (result < min) {
+        cin >> result;
+        if (cin.fail() || result < min) {
+            cout << "Please enter a valid number!" << endl;
+            std::cin.clear();
+            std::cin.ignore(256, '\n');
+        }
+    }
+    return result;
+}
+
+//wait and check for player input
+void playerMove(int** board, int row, int column) {
     cout << "Player's Turn:" << endl;
-    int input = -1;
-    while (input == -1) {
-        cin >> input;
+    while (true) {
+        int input = InputNumber(0);
+        for (int i = row - 1; i >= 0; i--) {
+            if (board[i][input] == 0) {
+                board[i][input] = 1;
+                cout << "Setting:" << i << " " << input << endl;
+                return;
+            }
+        }
+        cout << "Please enter a valid Move!" << endl;
     }
 }
 
 void AIMove() {
 }
 
+bool CheckWin(int** board, int row, int column, int x, int y, int d, int step) {
+    if (step >= 4) return true;
+    int dx = x + DIRECTION[d][0];
+    int dy = y + DIRECTION[d][1];
+    if (dx >= 0 && dx < row && dy >= 0 && dy < column && board[dx][dy] == board[x][y])
+        return CheckWin(board, row, column, dx, dy, d, step + 1);
+    return false;
+}
+
+int CheckWin(int** board, int row, int column) {
+    for (int i = 0; i < row; i ++)
+        for (int j = 0; j < column; j++) {
+            if (board[i][j] != 0) {
+                for (int k = 0; k < 8; k++) {
+                    if (CheckWin(board, row, column, i, j, k, 1))
+                        return board[i][j];
+                }
+            }
+        }
+    return 0;
+}
+
+
+//number of digit
+//Useful when there are more than 10 column
 int NumberOfDigits(int number) {
     int i = 0;
     if (number == 0) return 1;
@@ -24,7 +74,7 @@ int NumberOfDigits(int number) {
     return i;
 }
 
-void PrintBoard(int* board, int row, int column) {
+void PrintBoard(int** board, int row, int column) {
     cout << endl;
 
     int length = 0;
@@ -44,7 +94,7 @@ void PrintBoard(int* board, int row, int column) {
 
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < column; j++) {
-            cout << board[i, j];
+            cout << board[i][j];
             for (int k = 0; k < (NumberOfDigits(column)); k++)
                 cout << " ";
         }
@@ -54,10 +104,10 @@ void PrintBoard(int* board, int row, int column) {
     cout << endl;
 }
 
-void ResetBoard(int* board, int row, int column) {
+void ResetBoard(int** board, int row, int column) {
     for (int i = 0; i < row; i++)
         for (int j = 0; j < column; j++)
-            board[i, j] = 0;
+            board[i][j] = 0;
 
 }
 
@@ -66,32 +116,40 @@ int main()
     cout << "Push Four!" << endl;
 
     cout << "Please enter the number of Row:" << endl;
-    int row = 0;
-    while (row == 0) {
-        cin >> row;
-        if (row == 0)
-            cout << "The input isn't a number!" << endl;
-    }
+    int row = InputNumber(1);
 
     cout << "Please enter the number of column:" << endl;
-    int column = 0;
-    while (column == 0) {
-        cin >> column;
-        if (column == 0)
-            cout << "The input isn't a number!" << endl;
-    }
+    int column = InputNumber(1);
 
 
-    int* board;
-    board = new int[row, column];
+    int** board;
+    board = new int*[row];
+    for (int i = 0; i < row; i++)
+        board[i] = new int[column];
+
     ResetBoard(board, row, column);
 
     bool gameOver = false;
+    int winner = 0;
     
     while (!gameOver) {
 
         PrintBoard(board, row, column);
-        playerMove();
+        playerMove(board, row, column);
+        winner = CheckWin(board, row, column);
+        if (winner != 0) {
+            gameOver = true;
+            cout << "Player " << winner << " Won" << endl;
+        }
+
+        if (!gameOver) {
+            AIMove();
+            winner = CheckWin(board, row, column);
+            if (winner != 0) {
+                gameOver = true;
+                cout << "Player " << winner << " Won" << endl;
+            }
+        }
 
         if (gameOver) {
             cout << "Play Again? Y/N" << endl;
@@ -100,7 +158,7 @@ int main()
                 cin >> input;
                 if (input == 'y' || input == 'Y') {
                     ResetBoard(board, row, column);
-                    gameOver = true;
+                    gameOver = false;
                     break;
                 }
                 else if (input == 'n' || input == 'N'){
@@ -110,6 +168,12 @@ int main()
         }
     }
 
-    delete [] board;
+    for (int i = 0; i < row; i++) {
+        delete[] board[i];
+        board[i] = NULL;
+    }
+    delete[] board;
     board = NULL;
+
+    return 0;
 }
