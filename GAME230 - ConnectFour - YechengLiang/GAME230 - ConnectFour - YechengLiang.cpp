@@ -7,11 +7,11 @@ const int DIRECTION[8][2] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1}, {1, 1}, {1, -1},
 
 //Ask user for a number
 //Repeat until a vaild number greater than 0
-int InputNumber(int min) {
+int InputNumber(int min, int max) {
     int result = min -1;
-    while (result < min) {
+    while (result < min || result > max) {
         cin >> result;
-        if (cin.fail() || result < min) {
+        if (cin.fail() || result < min || result > max) {
             cout << "Please enter a valid number!" << endl;
             std::cin.clear();
             std::cin.ignore(256, '\n');
@@ -24,7 +24,7 @@ int InputNumber(int min) {
 void playerMove(int** board, int row, int column) {
     cout << "Player's Turn:" << endl;
     while (true) {
-        int input = InputNumber(0);
+        int input = InputNumber(0, column - 1);
         for (int i = row - 1; i >= 0; i--) {
             if (board[i][input] == 0) {
                 board[i][input] = 1;
@@ -36,9 +36,11 @@ void playerMove(int** board, int row, int column) {
     }
 }
 
+//Gu
 void AIMove() {
 }
 
+//Check wether we have a winner
 bool CheckWin(int** board, int row, int column, int x, int y, int d, int step) {
     if (step >= 4) return true;
     int dx = x + DIRECTION[d][0];
@@ -48,10 +50,10 @@ bool CheckWin(int** board, int row, int column, int x, int y, int d, int step) {
     return false;
 }
 
-int CheckWin(int** board, int row, int column) {
+int CheckWin(int** board, int row, int column, int player) {
     for (int i = 0; i < row; i ++)
         for (int j = 0; j < column; j++) {
-            if (board[i][j] != 0) {
+            if (board[i][j] == player) {
                 for (int k = 0; k < 8; k++) {
                     if (CheckWin(board, row, column, i, j, k, 1))
                         return board[i][j];
@@ -116,10 +118,10 @@ int main()
     cout << "Push Four!" << endl;
 
     cout << "Please enter the number of Row:" << endl;
-    int row = InputNumber(1);
+    int row = InputNumber(4, 20);
 
     cout << "Please enter the number of column:" << endl;
-    int column = InputNumber(1);
+    int column = InputNumber(3, 20);
 
 
     int** board;
@@ -136,18 +138,20 @@ int main()
 
         PrintBoard(board, row, column);
         playerMove(board, row, column);
-        winner = CheckWin(board, row, column);
+        winner = CheckWin(board, row, column, 1);
         if (winner != 0) {
             gameOver = true;
-            cout << "Player " << winner << " Won" << endl;
+            PrintBoard(board, row, column);
+            cout << "Human Player Won" << endl;
         }
 
         if (!gameOver) {
             AIMove();
-            winner = CheckWin(board, row, column);
+            winner = CheckWin(board, row, column, 2);
             if (winner != 0) {
                 gameOver = true;
-                cout << "Player " << winner << " Won" << endl;
+                PrintBoard(board, row, column);
+                cout << "AI Player Won" << endl;
             }
         }
 
