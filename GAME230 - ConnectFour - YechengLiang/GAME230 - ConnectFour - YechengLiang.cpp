@@ -78,12 +78,19 @@ int NumberOfDigits(int number) {
     return i;
 }
 
+char Sign(int t) {
+    if (t == 0) return '.';
+    else if (t == 1) return 'O';
+    else return 'X';
+}
+
 void PrintBoard(int** board, int row, int column) {
     cout << endl;
 
     int length = 0;
     for (int i = 0; i < column; i++) {
         cout << i;
+        length++;
         for (int k = 0; k < (NumberOfDigits(column) - NumberOfDigits(i) + 1); k++) {
             length++;
             cout << " ";
@@ -98,7 +105,7 @@ void PrintBoard(int** board, int row, int column) {
 
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < column; j++) {
-            cout << board[i][j];
+            cout << Sign(board[i][j]);
             for (int k = 0; k < (NumberOfDigits(column)); k++)
                 cout << " ";
         }
