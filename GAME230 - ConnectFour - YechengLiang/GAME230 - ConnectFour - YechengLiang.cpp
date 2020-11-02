@@ -7,6 +7,8 @@ using namespace std;
 const int DIRECTION[8][2] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1} };
 bool WarpAroundMode = false;
 bool pullMode = false;
+bool PvPMode = false;
+int winLenght = 4;
 
 //Ask user for a number
 //Repeat until a vaild number greater than 0
@@ -40,7 +42,7 @@ void AIMove(int** board, int row, int column) {
 
 //Check wether we have a winner
 bool CheckWin(int** board, int row, int column, int x, int y, int d, int step) {
-    if (step >= 4) return true;
+    if (step >= winLenght) return true;
     int dx = x + DIRECTION[d][0];
     int dy = y + DIRECTION[d][1];
     if (WarpAroundMode) {
@@ -52,19 +54,36 @@ bool CheckWin(int** board, int row, int column, int x, int y, int d, int step) {
     return false;
 }
 
-int CheckWin(int** board, int row, int column, int player) {
+bool CheckWin(int** board, int row, int column, int player) {
     for (int i = 0; i < row; i ++)
         for (int j = 0; j < column; j++) {
             if (board[i][j] == player) {
                 for (int k = 0; k < 8; k++) {
                     if (CheckWin(board, row, column, i, j, k, 1))
-                        return board[i][j];
+                        return (board[i][j] == player);
                 }
             }
         }
     return 0;
 }
 
+bool CheckWin(int** board, int row, int column) {
+    bool p1 = CheckWin(board, row, column, 1);
+    bool p2 = CheckWin(board, row, column, 2);
+
+    if (p1 && p2) {
+        cout << "Draw!" << endl;
+        return true;
+    } else if (p1 || p2) {
+        if (PvPMode)
+            cout << "Player 2 Won" << endl;
+        else
+            cout << "AI Player Won" << endl;
+
+        return true;
+    }
+    return false;
+}
 
 //number of digit
 //Useful when there are more than 10 column
@@ -148,13 +167,13 @@ bool Confirmation(string text) {
 }
 
 //wait and check for player input
-void playerMove(int** board, int row, int column) {
-    cout << "Player's Turn:" << endl;
+void playerMove(int** board, int row, int column, int player) {
+    cout << "Player" << player << "s Turn:" << endl;
     bool pull = false;
 
     while (true) {
         if (pullMode)
-            pull = Confirmation("Add or Pull Piece? Y / N");
+            pull = Confirmation("Pull or Add Piece? Y for Pull / N for Add");
         int input = InputNumber(0, column - 1);
 
         if (pull) {
@@ -163,7 +182,7 @@ void playerMove(int** board, int row, int column) {
         } else {
             for (int i = row - 1; i >= 0; i--) {
                 if (board[i][input] == 0) {
-                    board[i][input] = 1;
+                    board[i][input] = player;
                     cout << "Setting:" << input << "," << i << endl;
                     return;
                 }
@@ -184,8 +203,12 @@ int main(){
     int row = InputNumber(4, 20);
 
     cout << "Please enter the number of column:" << endl;
-    int column = InputNumber(3, 20);
+    int column = InputNumber(4, 20);
 
+    cout << "Please enter length required to Win" << endl;
+    winLenght = InputNumber(3, 20);
+
+    PvPMode = Confirmation("Player vs Player Mode? Y / N");
     pullMode = Confirmation("Pull mode? Y / N");
     WarpAroundMode = Confirmation("Warp Around Mode? Y / N");
 
@@ -205,31 +228,17 @@ int main(){
     while (!gameOver) {
 
         PrintBoard(board, row, column);
-        playerMove(board, row, column);
-        winner = CheckWin(board, row, column, 1);
-        if (winner == 1) {
-            gameOver = true;
-            PrintBoard(board, row, column);
-            cout << "Human Player Won" << endl;
-        }
-
-        if (pullMode) {
-            winner = CheckWin(board, row, column, 2);
-            if (winner == 2) {
-                gameOver = true;
-                PrintBoard(board, row, column);
-                cout << "AI Player Won" << endl;
-            }
-        }
+        playerMove(board, row, column, 1);
+        gameOver = CheckWin(board, row, column);
 
         if (!gameOver) {
-            AIMove(board, row, column);
-            winner = CheckWin(board, row, column, 2);
-            if (winner == 2) {
-                gameOver = true;
+            if (PvPMode) {
                 PrintBoard(board, row, column);
-                cout << "AI Player Won" << endl;
-            }
+                playerMove(board, row, column, 2);
+            } else
+                AIMove(board, row, column);
+
+            gameOver = CheckWin(board, row, column);
         }
 
 
@@ -243,6 +252,7 @@ int main(){
         }
 
         if (gameOver) {
+            PrintBoard(board, row, column);
             bool result = Confirmation("Play Again? Y/N");
             if (result) {
                 ResetBoard(board, row, column);
