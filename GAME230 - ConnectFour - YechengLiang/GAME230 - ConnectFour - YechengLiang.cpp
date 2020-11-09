@@ -76,9 +76,15 @@ bool CheckWin(int** board, int row, int column) {
         return true;
     } else if (p1 || p2) {
         if (PvPMode)
-            cout << "Player 2 Won" << endl;
+            if (p1)
+                cout << "Player 1 Won" << endl;
+            else
+                cout << "Player 2 Won" << endl;
         else
-            cout << "AI Player Won" << endl;
+            if (p1)
+                cout << "Human Won" << endl;
+            else
+                cout << "AI Player Won" << endl;
 
         return true;
     }
@@ -134,8 +140,8 @@ void PrintBoard(int** board, int row, int column) {
     cout << endl;
 }
 
-bool PullFrom(int** board, int row, int y) {
-    if (board[row - 1][y] == 0)
+bool PullFrom(int** board, int row, int y, int player) {
+    if (board[row - 1][y] != player)
         return false;
     else {
         for (int i = row - 1; i > 0; i--)
@@ -177,7 +183,7 @@ void playerMove(int** board, int row, int column, int player) {
         int input = InputNumber(0, column - 1);
 
         if (pull) {
-            if (PullFrom(board, row, input))
+            if (PullFrom(board, row, input, player))
                 return;
         } else {
             for (int i = row - 1; i >= 0; i--) {
@@ -206,7 +212,7 @@ int main(){
     int column = InputNumber(4, 20);
 
     cout << "Please enter length required to Win" << endl;
-    winLenght = InputNumber(3, 20);
+    winLenght = InputNumber(3, max(row, column));
 
     PvPMode = Confirmation("Player vs Player Mode? Y / N");
     pullMode = Confirmation("Pull mode? Y / N");
